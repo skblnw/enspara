@@ -221,6 +221,7 @@ def get_gates(cur_state, hard_boundaries, buffer_width):
 def phi_rotamers(traj, buffer_width=15):
     hard_boundaries = [0, 180, 360]
     angles, atom_inds = dihedral_angles(traj, 'phi')
+    np.savetxt('phi.csv', angles, delimiter=",")
 
     n_frames, n_angles = angles.shape
     rotamers = np.zeros((n_frames, n_angles), dtype='int16')
@@ -234,10 +235,12 @@ def phi_rotamers(traj, buffer_width=15):
 
 def psi_rotamers(traj, buffer_width=15):
     angles, atom_inds = dihedral_angles(traj, 'psi')
+    np.savetxt('psi.csv', angles, delimiter=",")
 
     # shift by 100 so boundaries at 0 and 360
-    shifted_angles = angles-100
+    shifted_angles = angles-60
     shifted_angles[np.where(shifted_angles < 0)] += 360
+    np.savetxt('psi_shifted.csv', shifted_angles, delimiter=",")
     hard_boundaries = [0, 160, 360]
 
     n_frames, n_angles = angles.shape
@@ -257,10 +260,12 @@ def chi_rotamers(traj, buffer_width=15):
     hard_boundaries = [0, 120, 240, 360]
 
     angles, atom_inds = dihedral_angles(traj, 'chi1')
-    for i in range(2, 5):
-        more_angles, more_atom_inds = dihedral_angles(traj, 'chi%d' % i)
-        angles = np.append(angles, more_angles, axis=1)
-        atom_inds = np.append(atom_inds, more_atom_inds, axis=0)
+    np.savetxt('chi1.csv', angles, delimiter=",")
+    # for i in range(2, 5):
+    #     more_angles, more_atom_inds = dihedral_angles(traj, 'chi%d' % i)
+    #     np.savetxt('chi%d.csv' % i, angles, delimiter=",")
+    #     angles = np.append(angles, more_angles, axis=1)
+    #     atom_inds = np.append(atom_inds, more_atom_inds, axis=0)
 
     n_frames, n_angles = angles.shape
     rotamers = np.zeros((n_frames, n_angles), dtype='int16')

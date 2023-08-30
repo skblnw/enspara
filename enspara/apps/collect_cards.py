@@ -156,10 +156,22 @@ def save_cards(ss_mi, dd_mi, sd_mi, ds_mi, outputName):
 
     return 0 
 
+def save_cards_smionly(ss_mi, outputName):
+    """Save the four cards matrices as a single pickle file
+    """
+
+    final_mats = {
+        'Struc_struc_MI': ss_mi, }
+    
+    logger.info("Saving matrices - saved as %s", outputName)
+
+    with open(outputName, 'wb') as f:
+        pickle.dump(final_mats, f)
+
+    return 0 
 
 
-
-def main(argv=None):
+def main(argv=None, output_smionly=True):
     """Run the driver script for this module. This code only runs if we're
     being run as a script. Otherwise, it's silent and just exposes methods.
     """
@@ -168,12 +180,18 @@ def main(argv=None):
     trj_list = load_trajs(args)
 
     with timed("Calculating CARDS correlations took %.1f s.", logger.info):
-        ss_mi, dd_mi, sd_mi, ds_mi, inds = cards(trj_list, args.buffer_size, 
+        if not output_smionly:
+            ss_mi, dd_mi, sd_mi, ds_mi, inds = cards(trj_list, args.buffer_size, 
                                                         args.processes)
+        else:
+            ss_mi, inds = cards(trj_list, args.buffer_size, args.processes)
 
     logger.info("Completed correlations. ")
 
-    save_cards(ss_mi, dd_mi, sd_mi, ds_mi, args.matrices)
+    if not output_smionly:
+        save_cards(ss_mi, dd_mi, sd_mi, ds_mi, args.matrices)
+    else:
+        save_cards_smionly(ss_mi, args.matrices)
     np.savetxt(args.indices, inds, delimiter=",")
 
     logger.info("Saved dihedral indices as %s", args.indices)

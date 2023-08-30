@@ -14,7 +14,7 @@ logger.setLevel(logging.INFO)
 
 
 @cite('cards')
-def cards(trajectories, buffer_width=15, n_procs=1):
+def cards(trajectories, buffer_width=15, n_procs=1, output_smionly=True):
     """Compute ordered, disordered and ordered-disordered mutual
     information matrices for the correlation between rotameric states
     across a set of trajectories.
@@ -53,8 +53,11 @@ def cards(trajectories, buffer_width=15, n_procs=1):
     r = RotamerFeaturizer(buffer_width=buffer_width, n_procs=n_procs)
     r.fit(trajectories)
 
-    return cards_matrices(r.feature_trajectories_,
-                          r.n_feature_states_, n_procs) + (r.atom_indices_,)
+    if not output_smionly:
+        return cards_matrices(r.feature_trajectories_,
+                              r.n_feature_states_, n_procs) + (r.atom_indices_,)
+    else:
+        return (cards_matrices_smionly(r.feature_trajectories_,r.n_feature_states_, n_procs),) + (r.atom_indices_,)
 
 
 @cite('cards')
@@ -88,8 +91,7 @@ def cards_matrices(feature_trajs, n_feature_states, n_procs=None):
         communication between dihedrals i and j.
     """
 
-    disordered_trajs, disorder_n_states = disorder.assign_order_disorder(
-        feature_trajs)
+    # disordered_trajs, disorder_n_states = disorder.assign_order_disorder(feature_trajs)
 
     logger.debug("Calculating structural mutual information")
     structural_mi = mutual_info.mi_matrix(
@@ -113,3 +115,43 @@ def cards_matrices(feature_trajs, n_feature_states, n_procs=None):
 
     return structural_mi, disorder_mi, struct_to_disorder_mi, \
         disorder_to_struct_mi
+
+
+def cards_matrices_smionly(feature_trajs, n_feature_states, n_procs=None):
+    """Compute ordered, disordered and ordered-disordered mutual
+    infrmation matrices for a set of trajectories of state assignments.
+
+    Parameters
+    ----------
+    feature_trajs: iterable
+        Trajectories of state labels. Generators are accepted and can be
+        used to mitigate memory usage.
+    n_feature_states: array, shape=(n_features,)
+        The total number of possible states for each feature.
+    n_procs: int
+        Number of cores to use for the parallel parts of the algorithm.
+
+    Returns
+    -------
+    structural_mi: ndarrray, shape=(n_dihedrals, n_dihedrals)
+        Matrix of MIs where (i,j) is the structural to structural
+        communication between dihedrals i and j.
+    disorder_mi: ndarray, shape=(n_dihedrals, n_dihedrals)
+        Matrix of MIs where (i,j) is the disordered to disordered
+        communication between dihedrals i and j.
+    struct_to_disorder_mi: ndarray, shape=(n_dihedrals, n_dihedrals)
+        Matrix of MIs where (i,j) is the structured to disordered
+        communication between dihedrals i and j.
+    disorder_to_struct_mi: ndarray, shape=(n_dihedrals, n_dihedrals)
+        Matrix of MIs where (i,j) is the structured to disordered
+        communication between dihedrals i and j.
+    """
+
+    # disordered_trajs, disorder_n_states = disorder.assign_order_disorder(feature_trajs)
+
+    logger.debug("Calculating structural mutual information")
+    structural_mi = mutual_info.mi_matrix(
+        feature_trajs, feature_trajs,
+        n_feature_states, n_feature_states)
+
+    return structural_mi
